@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>DevCollab Platform</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f4f6f9;
+margin:0;
+padding:0;
+}
+
+.container{
+max-width:800px;
+margin:auto;
+background:white;
+margin-top:30px;
+padding:30px;
+border-radius:10px;
+box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+h1{
+text-align:center;
+}
+
+input{
+width:100%;
+padding:10px;
+margin-top:6px;
+margin-bottom:10px;
+border:1px solid #ccc;
+border-radius:4px;
+}
+
+button{
+background:#007bff;
+border:none;
+padding:10px;
+color:white;
+border-radius:4px;
+cursor:pointer;
+margin-top:5px;
+}
+
+button:hover{
+background:#0056b3;
+}
+
+.repo{
+background:#eef2ff;
+padding:10px;
+margin-top:10px;
+border-radius:5px;
+}
+
+.section{
+margin-bottom:30px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>DevCollab Platform</h1>
+
+<div class="section">
+
+<h3>Register</h3>
+
+<input id="reg_username" placeholder="username">
+<input id="reg_email" placeholder="email">
+<input id="reg_password" placeholder="password">
+
+<button onclick="register()">Register</button>
+
+</div>
+
+
+<div class="section">
+
+<h3>Login</h3>
+
+<input id="login_username" placeholder="username">
+<input id="login_password" placeholder="password">
+
+<button onclick="login()">Login</button>
+
+<p id="login_status"></p>
+
+</div>
+
+
+<div class="section">
+
+<h3>Create Repository</h3>
+
+<input id="repo_name" placeholder="repository name">
+
+<button onclick="createRepo()">Create Repo</button>
+
+</div>
+
+
+<div class="section">
+
+<h3>My Repositories</h3>
+
+<button onclick="getRepos()">Load Repositories</button>
+
+<div id="repos"></div>
+
+</div>
+
+
+<div class="section">
+
+<h3>Update Repository</h3>
+
+<input id="update_repo_id" placeholder="repo id">
+<input id="update_repo_name" placeholder="new name">
+
+<button onclick="updateRepo()">Update Repo</button>
+
+</div>
+
+
+<div class="section">
+
+<h3>Delete Repository</h3>
+
+<input id="delete_repo_id" placeholder="repo id">
+
+<button onclick="deleteRepo()">Delete Repo</button>
+
+</div>
+
+
+<div class="section">
+
+<h3>Add File</h3>
+
+<input id="file_repo_id" placeholder="repo id">
+<input id="file_name" placeholder="filename">
+<input id="file_code" placeholder="code">
+
+<button onclick="addFile()">Add File</button>
+
+</div>
+
+
+<div class="section">
+
+<h3>View Files</h3>
+
+<input id="view_file_repo_id" placeholder="repo id">
+
+<button onclick="getFiles()">View Files</button>
+
+<div id="files"></div>
+
+</div>
+
+
+<div class="section">
+
+<h3>Create Commit</h3>
+
+<input id="commit_repo_id" placeholder="repo id">
+<input id="commit_message" placeholder="commit message">
+<input id="commit_user_id" placeholder="user id">
+
+<button onclick="createCommit()">Commit</button>
+
+</div>
+
+
+<div class="section">
+
+<h3>View Commits</h3>
+
+<input id="commit_repo_view" placeholder="repo id">
+
+<button onclick="getCommits()">Load Commits</button>
+
+<div id="commits"></div>
+
+</div>
+
+</div>
+
+
+<script>
+
+let token=""
+
+async function register(){
+
+const username=document.getElementById("reg_username").value
+const email=document.getElementById("reg_email").value
+const password=document.getElementById("reg_password").value
+
+await fetch(`http://127.0.0.1:8001/register?username=${username}&email=${email}&password=${password}`,{
+method:"POST"
+})
+
+alert("User Registered")
+
+}
+
+
+async function login(){
+
+const username=document.getElementById("login_username").value
+const password=document.getElementById("login_password").value
+
+const res=await fetch(`http://127.0.0.1:8001/login?username=${username}&password=${password}`,{
+method:"POST"
+})
+
+const data=await res.json()
+
+token=data.token
+
+document.getElementById("login_status").innerText="Logged In"
+
+}
+
+
+async function createRepo(){
+
+const name=document.getElementById("repo_name").value
+
+await fetch(`http://127.0.0.1:8001/repository?name=${name}`,{
+method:"POST",
+headers:{
+"Authorization":`Bearer ${token}`
+}
+})
+
+alert("Repo Created")
+
+}
+
+
+async function getRepos(){
+
+const res=await fetch("http://127.0.0.1:8001/my-repositories",{
+headers:{
+"Authorization":`Bearer ${token}`
+}
+})
+
+const data=await res.json()
+
+let html=""
+
+data.forEach(repo=>{
+
+html+=`
+<div class="repo">
+ID: ${repo.id} <br>
+Name: ${repo.name}
+</div>
+`
+
+})
+
+document.getElementById("repos").innerHTML=html
+
+}
+
+
+async function updateRepo(){
+
+const id=document.getElementById("update_repo_id").value
+const name=document.getElementById("update_repo_name").value
+
+await fetch(`http://127.0.0.1:8001/repository/${id}?name=${name}`,{
+
+method:"PUT",
+
+headers:{
+"Authorization":`Bearer ${token}`
+}
+
+})
+
+alert("Repo Updated")
+
+}
+
+
+async function deleteRepo(){
+
+const id=document.getElementById("delete_repo_id").value
+
+const res = await fetch(`http://127.0.0.1:8001/repository/${id}`,{
+
+method:"DELETE",
+
+headers:{
+"Authorization":`Bearer ${token}`
+}
+
+})
+
+const data = await res.json()
+
+alert(data.message)
+
+}
+
+
+async function addFile(){
+
+const repo=document.getElementById("file_repo_id").value
+const filename=document.getElementById("file_name").value
+const code=document.getElementById("file_code").value
+
+await fetch(`http://127.0.0.1:8001/repositories/${repo}/files?filename=${filename}&code=${code}`,{
+method:"POST"
+})
+
+alert("File Added")
+
+}
+
+
+async function getFiles(){
+
+const repo=document.getElementById("view_file_repo_id").value
+
+const res=await fetch(`http://127.0.0.1:8001/repositories/${repo}/files`)
+
+const data=await res.json()
+
+let html=""
+
+data.forEach(file=>{
+html+=`<div class="repo">${file.filename}</div>`
+})
+
+document.getElementById("files").innerHTML=html
+
+}
+
+
+async function createCommit(){
+
+const repo=document.getElementById("commit_repo_id").value
+const message=document.getElementById("commit_message").value
+const user=document.getElementById("commit_user_id").value
+
+await fetch(`http://127.0.0.1:8001/repositories/${repo}/commit?message=${message}&user_id=${user}`,{
+method:"POST"
+})
+
+alert("Commit Created")
+
+}
+
+
+async function getCommits(){
+
+const repo=document.getElementById("commit_repo_view").value
+
+const res=await fetch(`http://127.0.0.1:8001/repositories/${repo}/commits`)
+
+const data=await res.json()
+
+let html=""
+
+data.forEach(commit=>{
+html+=`<div class="repo">${commit.message}</div>`
+})
+
+document.getElementById("commits").innerHTML=html
+
+}
+
+</script>
+
+</body>
+</html>
